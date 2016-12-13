@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>TITLE</title>
+  </head>
+  <body>
+  <table id="events">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Source</th>
+        <th>IP</th>
+        <th>Event</th>
+        <th>Payload</th>
+      </tr>
+    </thead>
+    <tbody id="events-body">
+    </tbody>
+  </table>
+  <script type="text/javascript">
+    var ws = new WebSocket('ws://localhost:8081/ws');
+    var tbody = document.getElementById('events-body');
+    ws.onmessage = function onmessage(message) {
+      var data = JSON.parse(message.data);
+      var tr = document.createElement('tr');
+      var tdTime = document.createElement('td');
+      tdTime.textContent = data.time;
+      tr.appendChild(tdTime);
+
+      var tdSource = document.createElement('td');
+      tdSource.textContent = data.source;
+      tr.appendChild(tdSource);
+
+      var tdIP = document.createElement('td');
+      tdIP.textContent = data.ip;
+      tr.appendChild(tdIP);
+
+      var tdEvent = document.createElement('td');
+      tdEvent.textContent = data.event;
+      tr.appendChild(tdEvent);
+
+      var tdPayload = document.createElement('td');
+      tdPayload.textContent = JSON.stringify(data.payload);
+      tr.appendChild(tdPayload);
+
+      if (tbody.children.length === 0) {
+        tbody.appendChild(tr);
+      } else {
+        tbody.insertBefore(tr, tbody.firstChild);
+      }
+    };
+  </script>
+  </body>
+</html>
