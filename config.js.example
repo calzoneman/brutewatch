@@ -1,0 +1,33 @@
+const fs = require('fs');
+const config = {};
+
+config.http = {
+    enabled: true,
+    port: 8081,
+    host: '0.0.0.0'
+};
+
+config.telnet = {
+    enabled: true,
+    port: 23,
+    host: '0.0.0.0'
+};
+
+config.ssh = {
+    enabled: true,
+    port: 22,
+    host: '0.0.0.0',
+    hostKey: fs.readFileSync('server')
+};
+
+config.jsonFileReporter = {
+    enabled: true,
+    filename: 'attempts.json',
+    fileFlags: 'a'
+};
+
+config.setuid = {
+    uid: "nobody"
+};
+
+module.exports = config;

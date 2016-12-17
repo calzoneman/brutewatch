@@ -43,5 +43,5 @@ if (config.jsonFileReporter.enabled) {
 }
 
 if (config.setuid) {
-    process.setuid(config.setuid.uid);
+    setTimeout(() => {process.setuid(config.setuid.uid)}, 5000);
 }
