@@ -7,6 +7,7 @@ const SSHServer = require('./lib/ssh/ssh-server');
 const Webserver = require('./lib/web/webserver');
 const WebsocketController = require('./lib/web/ws-controller');
 const EventSender = require('./lib/event-sender');
+const JSONFileReporter = require('./lib/reporter/jsonfilereporter');
 const config = require('./config');
 
 const eventSender = new EventSender();
@@ -31,4 +32,16 @@ if (config.http.enabled) {
     new Webserver({
         wsController: wsController
     }).listen(config.http.port, config.http.host);
+}
+
+if (config.jsonFileReporter.enabled) {
+    new JSONFileReporter({
+        filename: config.jsonFileReporter.filename,
+        fileFlags: config.jsonFileReporter.fileFlags,
+        eventEmitter: eventSender
+    });
+}
+
+if (config.setuid) {
+    process.setuid(config.setuid.uid);
 }

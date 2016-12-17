@@ -2,54 +2,100 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>TITLE</title>
+    <title>Telnet/SSH Brute Force Monitor</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/min/1.5/min.min.css" type="text/css">
   </head>
   <body>
-  <table id="events">
-    <thead>
-      <tr>
-        <th>Time</th>
-        <th>Source</th>
-        <th>IP</th>
-        <th>Event</th>
-        <th>Payload</th>
-      </tr>
-    </thead>
-    <tbody id="events-body">
-    </tbody>
-  </table>
-  <script type="text/javascript">
-    var ws = new WebSocket('ws://localhost:8081/ws');
-    var tbody = document.getElementById('events-body');
-    ws.onmessage = function onmessage(message) {
-      var data = JSON.parse(message.data);
-      var tr = document.createElement('tr');
-      var tdTime = document.createElement('td');
-      tdTime.textContent = data.time;
-      tr.appendChild(tdTime);
+    <div class="">
+      <div class="col c12">
+        <h1>What is this?</h1>
+        <p style="text-align: left">
+          This page offers a realtime look at Telnet and SSH connection and login attempts
+          targeting this server.  A fake Telnet and SSH server are emulated to record
+          login attempts and display the information here.
 
-      var tdSource = document.createElement('td');
-      tdSource.textContent = data.source;
-      tr.appendChild(tdSource);
+          This is not a simulation, these are real attempts, most likely from bots
+          scanning the IPv4 address space targeting weakly secured servers, home routers,
+          and Internet of Things (IoT) devices.
+        </p>
+      </div>
+    </div>
+    <div class="">
+      <div class="col c12">
+        <table id="events" class="table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Source</th>
+              <th>IP</th>
+              <th>Event</th>
+              <th>Payload</th>
+            </tr>
+          </thead>
+          <tbody id="events-body">
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <script type="text/javascript">
+      var connected = false;
+      var maxRows = 500;
+      var reconnDelay = 5000;
+      var lastReconnAttempt = 0;
+      var ws = new WebSocket('ws://localhost:8081/ws');
+      var tbody = document.getElementById('events-body');
+      function onmessage(message) {
+        var data = JSON.parse(message.data);
+        var tr = document.createElement('tr');
+        var tdTime = document.createElement('td');
+        tdTime.textContent = new Date(data.time).toTimeString();
+        tr.appendChild(tdTime);
 
-      var tdIP = document.createElement('td');
-      tdIP.textContent = data.ip;
-      tr.appendChild(tdIP);
+        var tdSource = document.createElement('td');
+        tdSource.textContent = data.source;
+        tr.appendChild(tdSource);
 
-      var tdEvent = document.createElement('td');
-      tdEvent.textContent = data.event;
-      tr.appendChild(tdEvent);
+        var tdIP = document.createElement('td');
+        tdIP.textContent = data.ip;
+        tr.appendChild(tdIP);
 
-      var tdPayload = document.createElement('td');
-      tdPayload.textContent = JSON.stringify(data.payload);
-      tr.appendChild(tdPayload);
+        var tdEvent = document.createElement('td');
+        tdEvent.textContent = data.event;
+        tr.appendChild(tdEvent);
 
-      if (tbody.children.length === 0) {
-        tbody.appendChild(tr);
-      } else {
-        tbody.insertBefore(tr, tbody.firstChild);
+        var tdPayload = document.createElement('td');
+        var tdPayloadContent = document.createElement('pre');
+        tdPayloadContent.textContent = JSON.stringify(data.payload, null, 2);
+        tdPayload.appendChild(tdPayloadContent);
+        tr.appendChild(tdPayload);
+
+        if (tbody.children.length === 0) {
+          tbody.appendChild(tr);
+        } else if (tbody.children.length < maxRows) {
+          tbody.insertBefore(tr, tbody.firstChild);
+        } else {
+          tbody.removeChild(tbody.lastChild);
+          tbody.insertBefore(tr, tbody.firstChild);
+        }
+      };
+
+      function onclose() {
+        console.log(new Date().toLocaleTimeString(), 'Lost connection, '
+              + 'reconnecting in ' + reconnDelay + 'ms');
+        setTimeout(newWebsocket, reconnDelay);
       }
-    };
-  </script>
+
+      function newWebsocket() {
+        console.log(new Date().toLocaleTimeString(), 'Opening websocket');
+        ws = new WebSocket('ws://localhost:8081/ws');
+        ws.onmessage = onmessage;
+        ws.onclose = onclose;
+        ws.onopen = function() {
+          connected = true;
+        };
+      }
+
+      newWebsocket();
+    </script>
   </body>
 </html>
